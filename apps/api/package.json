@@ -1,0 +1,19 @@
+{
+  "name": "@medconnect/api",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "ts-node-dev src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  },
+  "devDependencies": {
+    "@medconnect/typescript-config": "workspace:*",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.15.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}
