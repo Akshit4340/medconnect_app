@@ -1,28 +1,13 @@
-// {
-//   "extends": "@medconnect/typescript-config/base.json",
-//   "compilerOptions": {
-//     "outDir": "dist",
-//     "rootDir": "src"
-//   },
-//   "include": ["src"]
-// }
 {
   "extends": "@medconnect/typescript-config/base.json",
   "compilerOptions": {
-    "target": "es6",
-    "module": "nodenext",
-    "rootDir": "src",
-    "outDir": "dist",
-    "strict": true,
-    "baseUrl": "./",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "removeComments": true,
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "lib": ["ES2022"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }
