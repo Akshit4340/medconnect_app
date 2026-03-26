@@ -8,7 +8,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-const migrations = ['001_initial_schema.sql', '002_auth_fields.sql'];
+const migrations = [
+  '001_initial_schema.sql',
+  '002_auth_fields.sql',
+  '003_row_level_security.sql',
+  '004_oauth.sql',
+];
 
 async function migrate() {
   const client = await pool.connect();

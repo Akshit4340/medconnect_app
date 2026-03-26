@@ -1,41 +1,42 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import type { JwtPayload } from '@medconnect/types';
+import { hasPermission, Action } from '../config/permissions';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
-// Extend Express Request to carry authenticated user
 declare global {
   namespace Express {
     interface Request {
       user?: JwtPayload;
+      tenant?: {
+        tenantId: string;
+        subdomain: string;
+      };
     }
   }
 }
+
+// ─── Verify JWT ───────────────────────────────────────────────────────────────
 
 export function requireAuth(
   req: Request,
   res: Response,
   next: NextFunction,
 ): void {
-  // Extract token from Authorization header: "Bearer <token>"
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({
-      success: false,
-      error: 'No token provided',
-    });
+    res.status(401).json({ success: false, error: 'No token provided' });
     return;
   }
 
   const token = authHeader.split(' ')[1];
 
   if (!token) {
-    res.status(401).json({
-      success: false,
-      error: 'Malformed authorization header',
-    });
+    res
+      .status(401)
+      .json({ success: false, error: 'Malformed authorization header' });
     return;
   }
 
@@ -52,21 +53,18 @@ export function requireAuth(
       });
       return;
     }
-    res.status(401).json({
-      success: false,
-      error: 'Invalid token',
-    });
+    res.status(401).json({ success: false, error: 'Invalid token' });
   }
 }
 
-// Role-based access guard — use after requireAuth
+// ─── Role guard ───────────────────────────────────────────────────────────────
+
 export function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ success: false, error: 'Not authenticated' });
       return;
     }
-
     if (!roles.includes(req.user.role)) {
       res.status(403).json({
         success: false,
@@ -74,7 +72,25 @@ export function requireRole(...roles: string[]) {
       });
       return;
     }
+    next();
+  };
+}
 
+// ─── Permission guard ─────────────────────────────────────────────────────────
+
+export function requirePermission(action: Action) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: 'Not authenticated' });
+      return;
+    }
+    if (!hasPermission(req.user.role, action)) {
+      res.status(403).json({
+        success: false,
+        error: `You do not have permission to perform: ${action}`,
+      });
+      return;
+    }
     next();
   };
 }
