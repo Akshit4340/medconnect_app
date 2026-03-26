@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { pgPool } from '../config/database';
 import { redis } from '../config/redis';
 import { logger } from '../config/logger';
+import { createTransporter } from '../config/email';
+import crypto from 'crypto';
 import type {
   RegisterInput,
   LoginInput,
@@ -11,6 +13,7 @@ import type {
   JwtPayload,
   User,
 } from '@medconnect/types';
+import nodemailer from 'nodemailer';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 const ACCESS_EXPIRES_IN = '15m';
@@ -265,4 +268,128 @@ export async function logoutUser(
     await redis.del(key);
     logger.info('Refresh token deleted on logout', { userId });
   }
+}
+
+const RESET_TOKEN_TTL = 60 * 60; // 1 hour in seconds
+
+function resetTokenKey(token: string): string {
+  return `reset:${token}`;
+}
+
+export async function requestPasswordReset(
+  email: string,
+  tenantSubdomain: string,
+): Promise<void> {
+  // 1. Find tenant
+  const tenantResult = await pgPool.query(
+    'SELECT id FROM tenants WHERE subdomain = $1 AND is_active = true',
+    [tenantSubdomain],
+  );
+
+  if (tenantResult.rows.length === 0) return; // Silent — don't reveal tenant existence
+
+  const tenantId = tenantResult.rows[0].id;
+
+  // 2. Find user
+  const userResult = await pgPool.query(
+    'SELECT id, email, first_name FROM users WHERE tenant_id = $1 AND email = $2',
+    [tenantId, email.toLowerCase()],
+  );
+
+  // Silent return — don't reveal if email exists (security best practice)
+  if (userResult.rows.length === 0) return;
+
+  const user = userResult.rows[0];
+
+  // 3. Generate a secure random token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  // 4. Store in Redis: reset:{token} → userId, expires in 1 hour
+  await redis.set(resetTokenKey(resetToken), user.id, 'EX', RESET_TOKEN_TTL);
+
+  // 5. Send email
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+
+  const transporter = await createTransporter();
+
+  const info = await transporter.sendMail({
+    from: '"MedConnect" <noreply@medconnect.com>',
+    to: user.email,
+    subject: 'Reset your MedConnect password',
+    html: `
+      <h2>Hi ${user.first_name},</h2>
+      <p>You requested a password reset. Click the link below to reset your password:</p>
+      <a href="${resetUrl}" style="
+        display: inline-block;
+        padding: 12px 24px;
+        background: #1D9E75;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+      ">Reset Password</a>
+      <p>This link expires in <strong>1 hour</strong>.</p>
+      <p>If you didn't request this, ignore this email.</p>
+    `,
+  });
+
+  // In development, log the Ethereal preview URL
+  if (process.env.NODE_ENV === 'development') {
+    logger.info('Password reset email preview', {
+      url: nodemailer.getTestMessageUrl(info),
+    });
+  }
+
+  logger.info('Password reset email sent', { userId: user.id });
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<void> {
+  if (newPassword.length < 8) {
+    throw new Error('Password must be at least 8 characters');
+  }
+
+  // 1. Look up token in Redis
+  const userId = await redis.get(resetTokenKey(token));
+
+  if (!userId) {
+    throw new Error('Reset token is invalid or has expired');
+  }
+
+  // 2. Hash new password
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+
+  // 3. Update password in Postgres
+  await pgPool.query(
+    'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+    [passwordHash, userId],
+  );
+
+  // 4. Delete reset token from Redis (one-time use)
+  await redis.del(resetTokenKey(token));
+
+  // 5. Revoke all existing refresh tokens (force re-login everywhere)
+  const refreshKeys = await redis.keys(`refresh:${userId}:*`);
+  if (refreshKeys.length > 0) {
+    await redis.del(...refreshKeys);
+  }
+
+  logger.info('Password reset successful', { userId });
+}
+
+// Used by OAuth strategies to issue tokens for an authenticated user
+export async function issueTokensForOAuthUser(user: {
+  id: string;
+  tenant_id: string;
+  email: string;
+  role: string;
+}): Promise<AuthTokens> {
+  const payload: JwtPayload = {
+    userId: user.id,
+    tenantId: user.tenant_id,
+    email: user.email,
+    role: user.role as any,
+  };
+  return issueTokenPair(payload);
 }

@@ -25,10 +25,15 @@
       "outputs": ["coverage/**"],
       "env": [
         "NODE_ENV",
+        "PORT",
         "DATABASE_URL",
         "MONGODB_URL",
         "REDIS_URL",
-        "JWT_SECRET"
+        "JWT_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_CALLBACK_URL",
+        "FRONTEND_URL"
       ]
     },
     "migrate": {

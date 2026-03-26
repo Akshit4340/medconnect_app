@@ -5,11 +5,16 @@ import { redis } from './config/redis';
 import { logger } from './config/logger';
 import { tenantMiddleware } from './middleware/tenant';
 import authRoutes from './routes/auth.routes';
+import passport from 'passport';
+import { initPassport } from './config/passport';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
 
 // ─── Global middleware ────────────────────────────────────────────────────────
+
+initPassport();
+app.use(passport.initialize());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
