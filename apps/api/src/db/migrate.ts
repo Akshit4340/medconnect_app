@@ -2,29 +2,29 @@ import 'dotenv/config';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Pool } from 'pg';
+import { logger } from '../config/logger';
 
 const pool = new Pool({
-  connectionString:
-    process.env.DATABASE_URL ||
-    'postgresql://medconnect:secret@localhost:5432/medconnect',
+  connectionString: process.env.DATABASE_URL,
 });
+
+const migrations = ['001_initial_schema.sql', '002_auth_fields.sql'];
 
 async function migrate() {
   const client = await pool.connect();
 
   try {
-    console.log('Running migrations...');
+    logger.info('Running migrations...');
 
-    const sql = readFileSync(
-      join(__dirname, 'migrations/001_initial_schema.sql'),
-      'utf-8',
-    );
+    for (const file of migrations) {
+      const sql = readFileSync(join(__dirname, 'migrations', file), 'utf-8');
+      await client.query(sql);
+      logger.info(`✅ Applied: ${file}`);
+    }
 
-    await client.query(sql);
-
-    console.log('✅ Migration 001_initial_schema applied successfully');
+    logger.info('All migrations complete');
   } catch (err) {
-    console.error('❌ Migration failed:', err);
+    logger.error('Migration failed', { error: err });
     process.exit(1);
   } finally {
     client.release();
