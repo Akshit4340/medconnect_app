@@ -96,3 +96,34 @@ export interface TenantContext {
   tenantId: string;
   subdomain: string;
 }
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  tenantSubdomain: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+  tenantSubdomain: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+export interface JwtPayload {
+  userId: string;
+  tenantId: string;
+  email: string;
+  role: UserRole;
+  tokenId?: string; // present only in refresh tokens
+}

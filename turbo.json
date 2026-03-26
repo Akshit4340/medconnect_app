@@ -23,7 +23,13 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
-      "env": ["NODE_ENV", "DATABASE_URL", "MONGODB_URL", "REDIS_URL"]
+      "env": [
+        "NODE_ENV",
+        "DATABASE_URL",
+        "MONGODB_URL",
+        "REDIS_URL",
+        "JWT_SECRET"
+      ]
     },
     "migrate": {
       "cache": false,

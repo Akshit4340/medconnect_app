@@ -1,19 +1,19 @@
-import express from 'express';
+import 'dotenv/config';
+import express, { Application } from 'express';
 import { pgPool } from './config/database';
+import { redis } from './config/redis';
 import { logger } from './config/logger';
 import { tenantMiddleware } from './middleware/tenant';
-import type { Application } from 'express';
-import 'dotenv/config';
+import authRoutes from './routes/auth.routes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
 
-// ─── Global middleware ───────────────────────────────────────────────────────
+// ─── Global middleware ────────────────────────────────────────────────────────
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Log every incoming request
 app.use((req, _res, next) => {
   logger.info(`${req.method} ${req.path}`, {
     host: req.headers.host,
@@ -22,13 +22,16 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Tenant resolution (runs on every request except /health)
 app.use((req, res, next) => {
   if (req.path === '/health') return next();
   tenantMiddleware(req, res, next);
 });
 
-// ─── Health check ────────────────────────────────────────────────────────────
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
+app.use('/auth', authRoutes);
+
+// ─── Health check ─────────────────────────────────────────────────────────────
 
 app.get('/health', async (_req, res) => {
   const health = {
@@ -36,34 +39,30 @@ app.get('/health', async (_req, res) => {
     timestamp: new Date().toISOString(),
     services: {
       postgres: 'unknown' as 'ok' | 'error',
+      redis: 'unknown' as 'ok' | 'error',
     },
   };
 
-  // Check Postgres
   try {
     await pgPool.query('SELECT 1');
     health.services.postgres = 'ok';
-  } catch (err) {
+  } catch {
     health.services.postgres = 'error';
     health.status = 'degraded';
-    logger.error('Postgres health check failed', { error: err });
   }
 
-  const statusCode = health.status === 'ok' ? 200 : 503;
-  res.status(statusCode).json(health);
-});
-
-// ─── Test tenant route ───────────────────────────────────────────────────────
-
-app.get('/api/me/tenant', (req, res) => {
-  if (!req.tenant) {
-    res.status(400).json({ success: false, error: 'No tenant context' });
-    return;
+  try {
+    await redis.ping();
+    health.services.redis = 'ok';
+  } catch {
+    health.services.redis = 'error';
+    health.status = 'degraded';
   }
-  res.json({ success: true, data: req.tenant });
+
+  res.status(health.status === 'ok' ? 200 : 503).json(health);
 });
 
-// ─── Global error handler ────────────────────────────────────────────────────
+// ─── Global error handler ─────────────────────────────────────────────────────
 
 app.use(
   (
@@ -77,13 +76,11 @@ app.use(
   },
 );
 
-// ─── Start server ────────────────────────────────────────────────────────────
+// ─── Start ────────────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
-  logger.info(`MedConnect API running`, {
+  logger.info('MedConnect API running', {
     port: PORT,
     env: process.env.NODE_ENV,
   });
 });
-
-export default app;
