@@ -11,6 +11,7 @@ import patientRoutes from './routes/patient.routes';
 import passport from 'passport';
 import { initPassport } from './config/passport';
 import { ensureBucket } from './config/storage';
+import cors from 'cors';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
@@ -19,6 +20,15 @@ const PORT = process.env.PORT || 3001;
 
 initPassport();
 app.use(passport.initialize());
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }),
+);
 
 ensureBucket().catch((err) =>
   logger.warn('MinIO bucket setup failed — file uploads unavailable', { err }),
