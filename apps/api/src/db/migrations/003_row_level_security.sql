@@ -3,8 +3,18 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- Create policy: users can only see rows matching their tenant
 -- This is enforced at the database level, not just application level
-CREATE POLICY tenant_isolation ON users
-  USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_catalog.pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'users' 
+    AND policyname = 'tenant_isolation'
+  ) THEN
+    CREATE POLICY tenant_isolation ON users
+      USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+  END IF;
+END $$;
 
 -- Allow superuser (your app's DB user) to bypass RLS for migrations
 ALTER TABLE users FORCE ROW LEVEL SECURITY;

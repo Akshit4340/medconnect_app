@@ -13,6 +13,7 @@ const migrations = [
   '002_auth_fields.sql',
   '003_row_level_security.sql',
   '004_oauth.sql',
+  '005_doctors_patients.sql',
 ];
 
 async function migrate() {
@@ -22,8 +23,23 @@ async function migrate() {
     logger.info('Running migrations...');
 
     for (const file of migrations) {
+      // Check if migration has already been applied
+      const result = await client.query(
+        'SELECT name FROM migrations WHERE name = $1',
+        [file],
+      );
+
+      if (result.rows.length > 0) {
+        logger.info(`⏭️  Skipped (already applied): ${file}`);
+        continue;
+      }
+
       const sql = readFileSync(join(__dirname, 'migrations', file), 'utf-8');
       await client.query(sql);
+
+      // Record the migration as applied
+      await client.query('INSERT INTO migrations (name) VALUES ($1)', [file]);
+
       logger.info(`✅ Applied: ${file}`);
     }
 

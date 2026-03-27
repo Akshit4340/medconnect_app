@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 
 services:
   postgres:
@@ -6,13 +6,13 @@ services:
     environment:
       POSTGRES_USER: medconnect
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: medconnect
+      POSTGRES_DB: mediaconnect
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U medconnect"]
+      test: ['CMD-SHELL', 'pg_isready -U medconnect']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,11 +20,27 @@ services:
   mongodb:
     image: mongo:7
     ports:
-      - "27017:27017"
+      - '27017:27017'
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", 'db.adminCommand("ping")']
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: medconnect
+      MINIO_ROOT_PASSWORD: secret12345
+    ports:
+      - '9000:9000' # S3 API
+      - '9001:9001' # MinIO Console UI
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,9 +48,9 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,3 +58,4 @@ services:
 volumes:
   postgres_data:
   mongo_data:
+  minio_data:

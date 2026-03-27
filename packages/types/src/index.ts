@@ -63,17 +63,6 @@ export interface Doctor {
 
 // ─── Patient ──────────────────────────────────────────────────────────────────
 
-export interface Patient {
-  id: string;
-  tenantId: string;
-  userId: string;
-  dateOfBirth: Date;
-  bloodGroup?: string;
-  allergies?: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 // ─── API Helpers ──────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
@@ -126,4 +115,107 @@ export interface JwtPayload {
   email: string;
   role: UserRole;
   tokenId?: string; // present only in refresh tokens
+}
+
+// ─── Doctor ───────────────────────────────────────────────────────────────────
+
+export interface Doctor {
+  id: string;
+  tenantId: string;
+  userId: string;
+  specialisation: string;
+  licenseNumber: string;
+  bio?: string;
+  avatarUrl?: string;
+  consultationFee: number;
+  isAvailable: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateDoctorInput {
+  specialisation: string;
+  licenseNumber: string;
+  bio?: string;
+  consultationFee?: number;
+}
+
+export interface UpdateDoctorInput {
+  specialisation?: string;
+  bio?: string;
+  consultationFee?: number;
+  isAvailable?: boolean;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  tenantId: string;
+  doctorId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  slotDurationMinutes: number;
+  isActive: boolean;
+}
+
+// ─── Patient ──────────────────────────────────────────────────────────────────
+
+export interface Patient {
+  id: string;
+  tenantId: string;
+  userId: string;
+  dateOfBirth?: Date;
+  bloodGroup?: string;
+  allergies?: string[];
+  medicalSummary?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreatePatientInput {
+  dateOfBirth?: string;
+  bloodGroup?: string;
+  allergies?: string[];
+  medicalSummary?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+}
+
+// ─── Appointment ──────────────────────────────────────────────────────────────
+
+export interface Appointment {
+  id: string;
+  tenantId: string;
+  doctorId: string;
+  patientId: string;
+  status: AppointmentStatus;
+  scheduledAt: Date;
+  durationMinutes: number;
+  notes?: string;
+  cancellationReason?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateAppointmentInput {
+  doctorId: string;
+  scheduledAt: string;
+  durationMinutes?: number;
+  notes?: string;
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+export interface PaginationParams {
+  limit?: number;
+  cursor?: string;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  nextCursor?: string;
+  hasMore: boolean;
+  total: number;
 }
