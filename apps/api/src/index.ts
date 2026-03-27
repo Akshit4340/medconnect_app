@@ -5,8 +5,12 @@ import { redis } from './config/redis';
 import { logger } from './config/logger';
 import { tenantMiddleware } from './middleware/tenant';
 import authRoutes from './routes/auth.routes';
+import doctorRoutes from './routes/doctor.routes';
+import appointmentRoutes from './routes/appointment.routes';
+import patientRoutes from './routes/patient.routes';
 import passport from 'passport';
 import { initPassport } from './config/passport';
+import { ensureBucket } from './config/storage';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +19,10 @@ const PORT = process.env.PORT || 3001;
 
 initPassport();
 app.use(passport.initialize());
+
+ensureBucket().catch((err) =>
+  logger.warn('MinIO bucket setup failed — file uploads unavailable', { err }),
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -35,6 +43,9 @@ app.use((req, res, next) => {
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 app.use('/auth', authRoutes);
+app.use('/doctors', doctorRoutes);
+app.use('/appointments', appointmentRoutes);
+app.use('/patients', patientRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 
