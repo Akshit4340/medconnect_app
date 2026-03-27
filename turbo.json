@@ -20,7 +20,9 @@
         "MINIO_ACCESS_KEY",
         "MINIO_SECRET_KEY",
         "MINIO_BUCKET",
-        "MINIO_REGION"
+        "MINIO_REGION",
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_APP_URL"
       ]
     },
     "typecheck": {
