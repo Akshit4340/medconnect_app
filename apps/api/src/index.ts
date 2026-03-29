@@ -11,6 +11,12 @@ import patientRoutes from './routes/patient.routes';
 import passport from 'passport';
 import { initPassport } from './config/passport';
 import { ensureBucket } from './config/storage';
+import { connectMongoDB } from './config/mongodb';
+import medicalRoutes from './routes/medical.routes';
+import mongoose from 'mongoose';
+import { authRateLimit, apiRateLimit } from './middleware/rate-limit';
+import { registry } from './config/metrics';
+import { metricsMiddleware } from './middleware/metrics';
 import cors from 'cors';
 
 const app: Application = express();
@@ -20,6 +26,12 @@ const PORT = process.env.PORT || 3001;
 
 initPassport();
 app.use(passport.initialize());
+
+app.use(metricsMiddleware);
+
+app.use('/auth/login', authRateLimit);
+app.use('/auth/register', authRateLimit);
+app.use('/api', apiRateLimit);
 
 app.use(
   cors({
@@ -33,6 +45,8 @@ app.use(
 ensureBucket().catch((err) =>
   logger.warn('MinIO bucket setup failed — file uploads unavailable', { err }),
 );
+
+connectMongoDB();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -56,8 +70,19 @@ app.use('/auth', authRoutes);
 app.use('/doctors', doctorRoutes);
 app.use('/appointments', appointmentRoutes);
 app.use('/patients', patientRoutes);
+app.use('/medical', medicalRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
+
+const health = {
+  status: 'ok' as 'ok' | 'degraded',
+  timestamp: new Date().toISOString(),
+  services: {
+    postgres: 'unknown' as 'ok' | 'error',
+    redis: 'unknown' as 'ok' | 'error',
+    mongodb: 'unknown' as 'ok' | 'error',
+  },
+};
 
 app.get('/health', async (_req, res) => {
   const health = {
@@ -66,6 +91,7 @@ app.get('/health', async (_req, res) => {
     services: {
       postgres: 'unknown' as 'ok' | 'error',
       redis: 'unknown' as 'ok' | 'error',
+      mongodb: 'unknown' as 'ok' | 'error',
     },
   };
 
@@ -84,8 +110,24 @@ app.get('/health', async (_req, res) => {
     health.services.redis = 'error';
     health.status = 'degraded';
   }
+  try {
+    if (mongoose.connection.readyState === 1) {
+      health.services.mongodb = 'ok';
+    } else {
+      health.services.mongodb = 'error';
+      health.status = 'degraded';
+    }
+  } catch {
+    health.services.mongodb = 'error';
+    health.status = 'degraded';
+  }
 
   res.status(health.status === 'ok' ? 200 : 503).json(health);
+});
+
+app.get('/metrics', async (_req, res) => {
+  res.set('Content-Type', registry.contentType);
+  res.send(await registry.metrics());
 });
 
 // ─── Global error handler ─────────────────────────────────────────────────────

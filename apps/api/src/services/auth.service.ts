@@ -15,6 +15,8 @@ import type {
 } from '@medconnect/types';
 import nodemailer from 'nodemailer';
 
+import type { UserRole } from '@medconnect/types';
+
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 const ACCESS_EXPIRES_IN = '15m';
 const REFRESH_EXPIRES_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -115,7 +117,7 @@ export async function registerUser(
     userId: user.id,
     tenantId: user.tenant_id,
     email: user.email,
-    role: user.role,
+    role: user.role as UserRole,
   };
 
   const tokens = await issueTokenPair(payload);
@@ -200,7 +202,7 @@ export async function loginUser(
       email: user.email,
       firstName: user.first_name,
       lastName: user.last_name,
-      role: user.role,
+      role: user.role as UserRole,
     },
     tokens,
   };
@@ -248,7 +250,7 @@ export async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
     userId: payload.userId,
     tenantId: payload.tenantId,
     email: payload.email,
-    role: payload.role,
+    role: payload.role as UserRole,
   };
 
   return issueTokenPair(newPayload);
@@ -379,17 +381,21 @@ export async function resetPassword(
 }
 
 // Used by OAuth strategies to issue tokens for an authenticated user
-export async function issueTokensForOAuthUser(user: {
+
+export interface OAuthUserRow {
   id: string;
   tenant_id: string;
   email: string;
-  role: string;
-}): Promise<AuthTokens> {
+  role: UserRole;
+}
+export async function issueTokensForOAuthUser(
+  user: OAuthUserRow,
+): Promise<AuthTokens> {
   const payload: JwtPayload = {
     userId: user.id,
     tenantId: user.tenant_id,
     email: user.email,
-    role: user.role as any,
+    role: user.role,
   };
   return issueTokenPair(payload);
 }

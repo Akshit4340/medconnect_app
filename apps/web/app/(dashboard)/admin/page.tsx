@@ -8,8 +8,19 @@ import {
   CardTitle,
 } from '../../../components/ui/card';
 
+interface AdminStats {
+  totalUsers: number;
+  totalDoctors: number;
+  totalPatients: number;
+  totalAppointments: number;
+  appointmentsByStatus: Record<string, number>;
+}
+
 export default function AdminDashboard() {
-  const { data: stats, isLoading } = useAdminStats();
+  const { data: stats, isLoading: statsLoading } = useAdminStats() as {
+    data: AdminStats | undefined;
+    isLoading: boolean;
+  };
 
   const statCards = [
     { label: 'Total users', value: stats?.totalUsers ?? 0, icon: '👥' },
@@ -25,7 +36,7 @@ export default function AdminDashboard() {
         <p className="text-slate-500 mt-1">Tenant overview</p>
       </div>
 
-      {isLoading ? (
+      {statsLoading ? (
         <p className="text-slate-500">Loading stats...</p>
       ) : (
         <>

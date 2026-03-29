@@ -14,6 +14,7 @@ const migrations = [
   '003_row_level_security.sql',
   '004_oauth.sql',
   '005_doctors_patients.sql',
+  '006_prescriptions.sql',
 ];
 
 async function migrate() {

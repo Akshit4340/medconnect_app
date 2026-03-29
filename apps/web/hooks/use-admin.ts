@@ -1,18 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 
+interface AdminStats {
+  totalUsers: number;
+  totalDoctors: number;
+  totalPatients: number;
+  totalAppointments: number;
+  appointmentsByStatus: Record<string, number>;
+}
+
 export function useAdminStats() {
   return useQuery({
     queryKey: ['admin', 'stats'],
     queryFn: async () => {
       const res = await api.get('/appointments/admin/stats');
-      return res.data.data as {
-        totalUsers: number;
-        totalDoctors: number;
-        totalPatients: number;
-        totalAppointments: number;
-        appointmentsByStatus: Record<string, number>;
-      };
+      return useQuery<AdminStats>({
+        queryKey: ['admin', 'stats'],
+        queryFn: async () => {
+          const res = await api.get('/appointments/admin/stats');
+          return res.data.data as AdminStats;
+        },
+      });
     },
   });
 }

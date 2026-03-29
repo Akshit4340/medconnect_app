@@ -1,0 +1,23 @@
+{
+  "name": "@medconnect/worker",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@medconnect/types": "workspace:*",
+    "bullmq": "^5.4.2",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.3.2",
+    "nodemailer": "^6.10.1"
+  },
+  "devDependencies": {
+    "@medconnect/typescript-config": "workspace:*",
+    "@types/node": "^20.0.0",
+    "@types/nodemailer": "^6.4.14",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}

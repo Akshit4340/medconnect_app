@@ -10,6 +10,7 @@ import {
 import { requireAuth } from '../middleware/auth';
 import passport from 'passport';
 import { issueTokensForOAuthUser } from '../services/auth.service';
+import type { OAuthUserRow } from '../services/auth.service';
 
 const router = Router();
 
@@ -248,7 +249,9 @@ router.get(
         return;
       }
 
-      const tokens = await issueTokensForOAuthUser(req.user as any);
+      const tokens = await issueTokensForOAuthUser(
+        req.user as unknown as OAuthUserRow,
+      );
 
       // Redirect to frontend with tokens in query params
       // In production use httpOnly cookies instead
@@ -257,6 +260,7 @@ router.get(
           `accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`,
       );
     } catch (err) {
+      console.error('OAuth callback error:', err);
       res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
     }
   },
