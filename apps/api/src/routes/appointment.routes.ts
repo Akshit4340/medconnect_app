@@ -9,6 +9,8 @@ import {
 } from '../services/appointment.service';
 import { getPaginationParams } from '../utils/pagination';
 
+import type { AppointmentStatus } from '@medconnect/types';
+
 const router = Router();
 
 // ─── POST /appointments ───────────────────────────────────────────────────────
@@ -46,6 +48,16 @@ router.get(
   '/',
   requireAuth,
   async (req: Request, res: Response): Promise<void> => {
+    const validStatuses: AppointmentStatus[] = [
+      'pending',
+      'confirmed',
+      'completed',
+      'cancelled',
+    ];
+    const statusParam = req.query.status as string | undefined;
+    const status = validStatuses.includes(statusParam as AppointmentStatus)
+      ? (statusParam as AppointmentStatus)
+      : undefined;
     try {
       const { limit, cursor } = getPaginationParams(
         req.query as Record<string, unknown>,
@@ -53,7 +65,7 @@ router.get(
       const result = await listAppointments(req.user!.tenantId, {
         doctorId: req.query.doctorId as string,
         patientId: req.query.patientId as string,
-        status: req.query.status as any,
+        status: status,
         cursor,
         limit,
       });

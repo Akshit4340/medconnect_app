@@ -1,0 +1,82 @@
+{
+  "title": "MedConnect Overview",
+  "uid": "medconnect-overview",
+  "version": 1,
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Request Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_requests_total[5m])",
+          "legendFormat": "{{method}} {{route}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "HTTP Error Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{status_code=~\"5..\"}[5m])",
+          "legendFormat": "{{route}} errors"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Active WebSocket Connections",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "socket_connections_active",
+          "legendFormat": "Active connections"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Total Appointments Created",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "targets": [
+        {
+          "expr": "appointments_created_total",
+          "legendFormat": "Appointments"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "BullMQ Queue Depth",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "bullmq_queue_size",
+          "legendFormat": "{{queue}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Response Time P95",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_ms_bucket[5m]))",
+          "legendFormat": "p95 latency"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" }
+}

@@ -1,0 +1,134 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: medconnect
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/medconnect
+      MONGODB_URL: mongodb://mongodb:27017/medconnect
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: medconnect-files
+      FRONTEND_URL: ${FRONTEND_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_REALTIME_URL: ${NEXT_PUBLIC_REALTIME_URL}
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  realtime:
+    build:
+      context: .
+      dockerfile: services/realtime/Dockerfile
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
+      REALTIME_PORT: 3002
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: services/worker/Dockerfile
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - '80:80'
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - web
+      - realtime
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  minio_data:

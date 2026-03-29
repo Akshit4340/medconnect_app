@@ -19,11 +19,19 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
+type AppointmentSummary = {
+  id: string;
+  status: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  doctorId: string;
+  notes?: string;
+};
+
 export default function PatientDashboard() {
   const { user } = useAuth();
   const { data, isLoading } = useAppointments({ status: 'confirmed' });
-
-  const appointments = data?.data || [];
+  const appointments: AppointmentSummary[] = data?.data || [];
 
   return (
     <div className="space-y-6">
@@ -105,7 +113,7 @@ export default function PatientDashboard() {
             </div>
           ) : (
             <div className="space-y-3">
-              {appointments.slice(0, 5).map((appt: Record<string, string>) => (
+              {appointments.slice(0, 5).map((appt: AppointmentSummary) => (
                 <div
                   key={appt.id}
                   className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"

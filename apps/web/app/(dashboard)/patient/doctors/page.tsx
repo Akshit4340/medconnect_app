@@ -27,6 +27,12 @@ type Doctor = {
   isAvailable: boolean;
 };
 
+type TimeSlot = {
+  startTime: string;
+  endTime: string;
+  available: boolean;
+};
+
 export default function FindDoctorsPage() {
   const [specialisation, setSpecialisation] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -216,22 +222,20 @@ export default function FindDoctorsPage() {
                 </p>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
-                  {availableSlots.map(
-                    (slot: { startTime: string; endTime: string }) => (
-                      <Button
-                        key={slot.startTime}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSelectSlot(slot.startTime)}
-                        className="text-xs"
-                      >
-                        {new Date(slot.startTime).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </Button>
-                    ),
-                  )}
+                  {availableSlots.map((slot: TimeSlot) => (
+                    <Button
+                      key={slot.startTime}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSelectSlot(slot.startTime)}
+                      className="text-xs"
+                    >
+                      {new Date(slot.startTime).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Button>
+                  ))}
                 </div>
               )}
             </CardContent>

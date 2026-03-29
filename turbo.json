@@ -13,16 +13,30 @@
       "env": [
         "NODE_ENV",
         "PORT",
+        "FRONTEND_URL",
         "DATABASE_URL",
         "MONGODB_URL",
         "REDIS_URL",
+        "JWT_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_CALLBACK_URL",
         "MINIO_ENDPOINT",
         "MINIO_ACCESS_KEY",
         "MINIO_SECRET_KEY",
         "MINIO_BUCKET",
         "MINIO_REGION",
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_USER",
+        "SMTP_PASS",
+        "REALTIME_PORT",
+        "WORKER_CONCURRENCY",
         "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL"
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_REALTIME_URL",
+        "PROMETHEUS_PORT",
+        "GRAFANA_PORT"
       ]
     },
     "typecheck": {
