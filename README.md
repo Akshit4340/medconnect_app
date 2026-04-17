@@ -63,14 +63,8 @@ pnpm --filter @medconnect/api run migrate
 pnpm dev
 ```
 
-### Services
-
-| Service       | URL                   |
-| ------------- | --------------------- |
-| Frontend      | http://localhost:3000 |
-| API           | http://localhost:3001 |
-| Realtime      | http://localhost:3002 |
-| MinIO Console | http://localhost:9001 |
+### Deployed Link
+Vercel - https://medconnect-app-6wwas21r7-meshramakshit15-8691s-projects.vercel.app
 
 ### Environment variables
 
