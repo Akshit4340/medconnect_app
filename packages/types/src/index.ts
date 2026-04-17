@@ -26,42 +26,13 @@ export interface User {
   updatedAt: Date;
 }
 
-// ─── Appointment ──────────────────────────────────────────────────────────────
+// ─── Appointment Status ───────────────────────────────────────────────────────
 
 export type AppointmentStatus =
   | 'pending'
   | 'confirmed'
   | 'completed'
   | 'cancelled';
-
-export interface Appointment {
-  id: string;
-  tenantId: string;
-  doctorId: string;
-  patientId: string;
-  status: AppointmentStatus;
-  scheduledAt: Date;
-  durationMinutes: number;
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// ─── Doctor ───────────────────────────────────────────────────────────────────
-
-export interface Doctor {
-  id: string;
-  tenantId: string;
-  userId: string;
-  specialisation: string;
-  licenseNumber: string;
-  bio?: string;
-  isAvailable: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// ─── Patient ──────────────────────────────────────────────────────────────────
 
 // ─── API Helpers ──────────────────────────────────────────────────────────────
 
@@ -219,3 +190,7 @@ export interface PaginatedResult<T> {
   hasMore: boolean;
   total: number;
 }
+
+// ─── Zod Schemas (reusable across frontend + backend) ─────────────────────────
+
+export * from './schemas';

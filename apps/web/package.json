@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
-    "@medconnect/ui": "workspace:*",
+    "@medconnect/types": "workspace:*",
     "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/react-query": "^5.95.2",
     "axios": "^1.13.6",

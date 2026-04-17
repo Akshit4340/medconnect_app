@@ -44,7 +44,7 @@ import {
   loginUser,
   refreshTokens,
   logoutUser,
-} from '../services/auth.service';
+} from '../modules/auth/auth.service';
 
 const mockPgQuery = pgPool.query as jest.Mock;
 const mockRedisSet = redis.set as jest.Mock;

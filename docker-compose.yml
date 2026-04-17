@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: medconnect
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: mediaconnect
+      POSTGRES_DB: medconnect
     ports:
       - '5432:5432'
     volumes:
@@ -54,10 +54,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   prometheus:
     image: prom/prometheus:latest
     ports:
       - '9090:9090'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     volumes:
       - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus

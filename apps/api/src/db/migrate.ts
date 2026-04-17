@@ -15,12 +15,24 @@ const migrations = [
   '004_oauth.sql',
   '005_doctors_patients.sql',
   '006_prescriptions.sql',
+  '007_seed_demo_tenant.sql',
 ];
 
 async function migrate() {
   const client = await pool.connect();
 
   try {
+    // Bootstrap: ensure migrations tracking table exists BEFORE
+    // checking which migrations have been applied.
+    // (001_initial_schema.sql also creates this table, but we need it first)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS migrations (
+        id         SERIAL PRIMARY KEY,
+        name       VARCHAR(255) NOT NULL UNIQUE,
+        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
     logger.info('Running migrations...');
 
     for (const file of migrations) {
