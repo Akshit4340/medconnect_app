@@ -9,6 +9,9 @@
       "types": "./src/index.ts"
     }
   },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
   "devDependencies": {
     "@medconnect/typescript-config": "workspace:*",
     "typescript": "^5.3.3"

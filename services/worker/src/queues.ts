@@ -10,6 +10,7 @@ const connection = new Redis(
 
 export const emailQueue = new Queue('email', { connection });
 export const reminderQueue = new Queue('reminders', { connection });
+export const notificationQueue = new Queue('notifications', { connection });
 export const pdfQueue = new Queue('pdf', { connection });
 
 export { connection };

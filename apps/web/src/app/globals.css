@@ -1,0 +1,177 @@
+/* UI OVERHAUL: Complete Parsley Health-inspired design system.
+ * - Warm off-white/cream backgrounds, sage green accents, charcoal text
+ * - Generous rounded corners, subtle shadows, smooth transitions
+ * - Serif heading font (Lora) + sans-serif body (Inter) */
+
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    /* ── Typography ── */
+    --font-heading: 'Lora', Georgia, serif;
+    --font-sans: 'Inter', system-ui, sans-serif;
+
+    /* ── Sidebar token mappings ── */
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+
+    /* ── Chart tokens ── */
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+
+    /* ── Core semantic tokens ── */
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+
+    /* ── Radius — softer, more rounded ── */
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ── LIGHT MODE: Parsley Health-inspired earthy palette ── */
+:root {
+    /* Warm cream / off-white background */
+    --background: #FAF8F5;
+    /* Deep charcoal for text (not pure black — reduces eye strain) */
+    --foreground: #2D2D2D;
+
+    /* Cards: clean white */
+    --card: #FFFFFF;
+    --card-foreground: #2D2D2D;
+
+    /* Popover: clean white */
+    --popover: #FFFFFF;
+    --popover-foreground: #2D2D2D;
+
+    /* Primary: muted sage green — the hero accent */
+    --primary: #5B7B6A;
+    --primary-foreground: #FFFFFF;
+
+    /* Secondary: warm sand / beige */
+    --secondary: #F0EBE3;
+    --secondary-foreground: #3D3D3D;
+
+    /* Muted: light warm gray */
+    --muted: #F5F0EB;
+    --muted-foreground: #7A7267;
+
+    /* Accent: light sage (hover backgrounds, highlights) */
+    --accent: #E8F0EC;
+    --accent-foreground: #3D5A4A;
+
+    /* Destructive: muted terracotta for warnings/errors */
+    --destructive: #C4604A;
+
+    /* Border: warm gray — subtle, not harsh */
+    --border: #E8E2DA;
+    --input: #E8E2DA;
+    --ring: #5B7B6A;
+
+    /* Charts: earthy gradient */
+    --chart-1: #5B7B6A;
+    --chart-2: #8BA798;
+    --chart-3: #C4604A;
+    --chart-4: #D4A574;
+    --chart-5: #7A7267;
+
+    /* Generous border radius for Parsley's soft, rounded aesthetic */
+    --radius: 0.75rem;
+
+    /* Sidebar: warm cream tones */
+    --sidebar: #FAF8F5;
+    --sidebar-foreground: #2D2D2D;
+    --sidebar-primary: #5B7B6A;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #E8F0EC;
+    --sidebar-accent-foreground: #3D5A4A;
+    --sidebar-border: #E8E2DA;
+    --sidebar-ring: #5B7B6A;
+}
+
+/* ── DARK MODE: warm dark palette ── */
+.dark {
+    --background: #1A1A18;
+    --foreground: #F0EBE3;
+    --card: #242422;
+    --card-foreground: #F0EBE3;
+    --popover: #242422;
+    --popover-foreground: #F0EBE3;
+    --primary: #8BA798;
+    --primary-foreground: #1A1A18;
+    --secondary: #2E2E2B;
+    --secondary-foreground: #F0EBE3;
+    --muted: #2E2E2B;
+    --muted-foreground: #A09A90;
+    --accent: #2E3B34;
+    --accent-foreground: #C5D8CD;
+    --destructive: #D4604A;
+    --border: rgba(240, 235, 227, 0.1);
+    --input: rgba(240, 235, 227, 0.15);
+    --ring: #8BA798;
+    --chart-1: #8BA798;
+    --chart-2: #A09A90;
+    --chart-3: #D4604A;
+    --chart-4: #D4A574;
+    --chart-5: #5B7B6A;
+    --sidebar: #242422;
+    --sidebar-foreground: #F0EBE3;
+    --sidebar-primary: #8BA798;
+    --sidebar-primary-foreground: #1A1A18;
+    --sidebar-accent: #2E3B34;
+    --sidebar-accent-foreground: #C5D8CD;
+    --sidebar-border: rgba(240, 235, 227, 0.1);
+    --sidebar-ring: #8BA798;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+
+  /* UI OVERHAUL: Serif font for headings — builds trust and authority */
+  h1, h2 {
+    font-family: var(--font-heading);
+  }
+}

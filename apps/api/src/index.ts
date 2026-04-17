@@ -1,26 +1,29 @@
 import 'dotenv/config';
 import express, { Application } from 'express';
+import { env } from './config/env';
 import { pgPool } from './config/database';
 import { redis } from './config/redis';
 import { logger } from './config/logger';
-import { tenantMiddleware } from './middleware/tenant';
-import authRoutes from './routes/auth.routes';
-import doctorRoutes from './routes/doctor.routes';
-import appointmentRoutes from './routes/appointment.routes';
-import patientRoutes from './routes/patient.routes';
+import { tenantMiddleware } from './shared/middleware/tenant';
+import authRoutes from './modules/auth/auth.routes';
+import doctorRoutes from './modules/users/doctor.routes';
+import appointmentRoutes from './modules/appointments/appointment.routes';
+import patientRoutes from './modules/users/patient.routes';
 import passport from 'passport';
 import { initPassport } from './config/passport';
 import { ensureBucket } from './config/storage';
 import { connectMongoDB } from './config/mongodb';
-import medicalRoutes from './routes/medical.routes';
+import medicalRoutes from './modules/consultations/medical.routes';
+import fileRoutes from './modules/media/file.routes';
 import mongoose from 'mongoose';
-import { authRateLimit, apiRateLimit } from './middleware/rate-limit';
+import { authRateLimit, apiRateLimit } from './shared/middleware/rate-limit';
 import { registry } from './config/metrics';
-import { metricsMiddleware } from './middleware/metrics';
+import { metricsMiddleware } from './shared/middleware/metrics';
 import cors from 'cors';
+import { createBullBoardRouter } from './config/bull-board';
 
 const app: Application = express();
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT;
 
 // ─── Global middleware ────────────────────────────────────────────────────────
 
@@ -35,7 +38,7 @@ app.use('/api', apiRateLimit);
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: env.FRONTEND_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -60,7 +63,7 @@ app.use((req, _res, next) => {
 });
 
 app.use((req, res, next) => {
-  if (req.path === '/health') return next();
+  if (req.path === '/health' || req.path === '/metrics') return next();
   tenantMiddleware(req, res, next);
 });
 
@@ -71,18 +74,9 @@ app.use('/doctors', doctorRoutes);
 app.use('/appointments', appointmentRoutes);
 app.use('/patients', patientRoutes);
 app.use('/medical', medicalRoutes);
+app.use('/files', fileRoutes);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
-
-const health = {
-  status: 'ok' as 'ok' | 'degraded',
-  timestamp: new Date().toISOString(),
-  services: {
-    postgres: 'unknown' as 'ok' | 'error',
-    redis: 'unknown' as 'ok' | 'error',
-    mongodb: 'unknown' as 'ok' | 'error',
-  },
-};
 
 app.get('/health', async (_req, res) => {
   const health = {
@@ -130,25 +124,52 @@ app.get('/metrics', async (_req, res) => {
   res.send(await registry.metrics());
 });
 
+app.use('/admin/queues', createBullBoardRouter());
+
 // ─── Global error handler ─────────────────────────────────────────────────────
 
 app.use(
   (
-    err: Error,
+    err: any,
     _req: express.Request,
     res: express.Response,
     _next: express.NextFunction,
   ) => {
     logger.error('Unhandled error', { error: err.message, stack: err.stack });
+
+    if (err.isOperational) {
+      return res.status(err.statusCode || 400).json({
+        success: false,
+        error: err.message,
+        code: err.code || 'BAD_REQUEST',
+      });
+    }
+
     res.status(500).json({ success: false, error: 'Internal server error' });
   },
 );
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info('MedConnect API running', {
     port: PORT,
-    env: process.env.NODE_ENV,
+    env: env.NODE_ENV,
   });
 });
+
+// ─── Graceful shutdown ────────────────────────────────────────────────────────
+
+async function shutdown() {
+  logger.info('Shutting down gracefully...');
+  server.close(() => {
+    logger.info('HTTP server closed');
+  });
+  await pgPool.end();
+  await redis.quit();
+  await mongoose.disconnect();
+  process.exit(0);
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
